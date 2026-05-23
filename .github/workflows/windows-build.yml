@@ -22,7 +22,6 @@ jobs:
 
       - name: Install dependencies and build
         run: |
-          corepack enable
           npm install -g pnpm@7
           pnpm -v
           pnpm install --frozen-lockfile
