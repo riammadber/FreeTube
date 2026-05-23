@@ -1,0 +1,45 @@
+name: Build Windows installer
+
+on:
+  push:
+    branches: [ development ]
+  pull_request:
+    branches: [ development ]
+
+jobs:
+  build-windows:
+    name: Build on Windows
+    runs-on: windows-latest
+
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+
+      - name: Setup Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: '18'
+          cache: 'pnpm'
+
+      - name: Enable Corepack and pnpm
+        run: |
+          corepack enable
+          corepack prepare pnpm@latest --activate
+
+      - name: Install dependencies
+        run: pnpm install --frozen-lockfile
+
+      - name: Build (pack + release)
+        env:
+          CI: true
+        run: pnpm run build
+
+      - name: Show build output (dist)
+        run: dir dist
+
+      - name: Upload artifacts
+        uses: actions/upload-artifact@v4
+        with:
+          name: windows-installers
+          path: |
+            dist/**
