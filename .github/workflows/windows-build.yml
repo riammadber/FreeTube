@@ -21,18 +21,15 @@ jobs:
           node-version: '18'
           cache: 'pnpm'
 
-      - name: Enable Corepack and pnpm
+      - name: Install dependencies and build
         run: |
           corepack enable
           corepack prepare pnpm@latest --activate
-
-      - name: Install dependencies
-        run: pnpm install --frozen-lockfile
-
-      - name: Build (pack + release)
+          pnpm -v
+          pnpm install --frozen-lockfile
+          pnpm run build
         env:
           CI: true
-        run: pnpm run build
 
       - name: Show build output (dist)
         run: dir dist
