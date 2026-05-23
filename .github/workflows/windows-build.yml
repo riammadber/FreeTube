@@ -1,0 +1,43 @@
+name: Build Windows installer
+
+on:
+  push:
+    branches: [ development ]
+  pull_request:
+    branches: [ development ]
+
+jobs:
+  build-windows:
+    name: Build on Windows
+    runs-on: windows-latest
+
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+
+      - name: Setup Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: '18'
+
+      - name: Install dependencies and build (npm)
+        run: |
+          npm ci --prefer-offline --no-audit
+          npm run pack:main
+          npm run pack:renderer
+          npm run pack:preload
+          npm run pack:botGuardScript
+          node _scripts/injectAllowedPaths.mjs
+          node _scripts/build.mjs
+        env:
+          CI: true
+
+      - name: Show build output (dist)
+        run: dir dist
+
+      - name: Upload artifacts
+        uses: actions/upload-artifact@v4
+        with:
+          name: windows-installers
+          path: |
+            dist/**
