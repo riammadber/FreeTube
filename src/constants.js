@@ -47,6 +47,15 @@ const IpcChannels = {
 
   OPEN_IN_EXTERNAL_PLAYER: 'open-in-external-player',
   OPEN_IN_EXTERNAL_PLAYER_RESULT: 'open-in-external-player-result'
+  ,
+  // Downloading
+  START_DOWNLOAD: 'start-download',
+  CANCEL_DOWNLOAD: 'cancel-download',
+  DOWNLOAD_PROGRESS: 'download-progress',
+  DOWNLOAD_COMPLETE: 'download-complete',
+  DOWNLOAD_ERROR: 'download-error',
+  CHOOSE_DOWNLOAD_FOLDER: 'choose-download-folder',
+  GET_DOWNLOAD_HISTORY: 'get-download-history'
 }
 
 const DBActions = {

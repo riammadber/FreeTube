@@ -28,6 +28,7 @@ import packageDetails from '../../package.json'
 import { handleOpenInExternalPlayer } from './externalPlayer'
 import { generatePoToken } from './poTokenGenerator'
 import { isFreeTubeUrl } from './utils'
+import { startDownload, cancelDownload } from './yt-dlp'
 
 const brotliDecompressAsync = promisify(brotliDecompress)
 
@@ -1455,6 +1456,95 @@ function runApp() {
     }
 
     return true
+  })
+
+  ipcMain.handle(IpcChannels.START_DOWNLOAD, async (event, { videoId, title, channelName, url, format, outputPath }) => {
+    if (!isFreeTubeUrl(event.senderFrame.url)) return
+
+    if (typeof videoId !== 'string' || videoId.length === 0) {
+      throw new Error('Invalid videoId')
+    }
+
+    const id = `${videoId}-${Date.now()}`
+
+    // Kick off download but stream progress back to renderer
+    startDownload(id, url || `https://www.youtube.com/watch?v=${videoId}`, outputPath, { format }, (progress) => {
+      try {
+        event.sender.send(IpcChannels.DOWNLOAD_PROGRESS, { id, progress })
+      } catch (e) {}
+    }).then(() => {
+      try {
+        event.sender.send(IpcChannels.DOWNLOAD_COMPLETE, { id, videoId, title, channelName })
+      } catch (e) {}
+    }).catch((err) => {
+      try {
+        event.sender.send(IpcChannels.DOWNLOAD_ERROR, { id, error: err?.toString?.() || String(err) })
+      } catch (e) {}
+    })
+
+    return { id }
+  })
+
+  ipcMain.on(IpcChannels.CANCEL_DOWNLOAD, (event, id) => {
+    if (!isFreeTubeUrl(event.senderFrame.url)) return
+
+    try {
+      const ok = cancelDownload(id)
+      event.reply(IpcChannels.DOWNLOAD_ERROR, { id, cancelled: ok })
+    } catch (e) {
+      event.reply(IpcChannels.DOWNLOAD_ERROR, { id, error: e?.toString?.() || String(e) })
+    }
+  })
+
+  async function chooseDownloadFolder(webContents, currentPath) {
+    if (typeof currentPath !== 'string' || currentPath.length === 0) {
+      currentPath = app.getPath('downloads')
+    }
+
+    const dialogOptions = {
+      defaultPath: currentPath,
+      properties: ['openDirectory']
+    }
+
+    let result
+
+    const window = BrowserWindow.fromWebContents(webContents)
+    if (window) {
+      result = await dialog.showOpenDialog(window, dialogOptions)
+    } else {
+      result = await dialog.showOpenDialog(dialogOptions)
+    }
+
+    if (result.canceled) {
+      return
+    }
+
+    const settingId = 'downloadFolderPath'
+
+    await baseHandlers.settings.upsert(settingId, result.filePaths[0])
+
+    const syncPayload = {
+      event: SyncEvents.GENERAL.UPSERT,
+      data: {
+        _id: settingId,
+        value: result.filePaths[0]
+      }
+    }
+
+    BrowserWindow.getAllWindows().forEach((window) => {
+      if (isFreeTubeUrl(window.webContents.getURL())) {
+        window.webContents.send(IpcChannels.SYNC_SETTINGS, syncPayload)
+      }
+    })
+
+    return result.filePaths[0]
+  }
+
+  ipcMain.on(IpcChannels.CHOOSE_DOWNLOAD_FOLDER, async (event) => {
+    if (!isFreeTubeUrl(event.senderFrame.url)) return
+
+    const currentPath = (await baseHandlers.settings._findOne('downloadFolderPath'))?.value
+    await chooseDownloadFolder(event.sender, currentPath)
   })
 
   /** @type {Map<number, number>} */

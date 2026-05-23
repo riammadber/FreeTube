@@ -8,6 +8,7 @@ import { AudioTrackSelection } from './player-components/AudioTrackSelection'
 import { FullWindowButton } from './player-components/FullWindowButton'
 import { LegacyQualitySelection } from './player-components/LegacyQualitySelection'
 import { ScreenshotButton } from './player-components/ScreenshotButton'
+import { DownloadButton } from './player-components/DownloadButton'
 import { StatsButton } from './player-components/StatsButton'
 import { TheatreModeButton } from './player-components/TheatreModeButton'
 import { AutoplayToggle } from './player-components/AutoplayToggle'
@@ -1934,6 +1935,21 @@ export default defineComponent({
       shakaOverflowMenu.registerElement('ft_screenshot', new ScreenshotButtonFactory())
     }
 
+    function registerDownloadButton() {
+      events.addEventListener('requestDownload', () => {
+        emit('request-download')
+      })
+
+      class DownloadButtonFactory {
+        create(rootElement, controls) {
+          return new DownloadButton(events, rootElement, controls)
+        }
+      }
+
+      shakaControls.registerElement('ft_download', new DownloadButtonFactory())
+      shakaOverflowMenu.registerElement('ft_download', new DownloadButtonFactory())
+    }
+
     function registerSkipButtons() {
       // skip to next video button
       events.addEventListener('nextVideo', () => {
@@ -2735,6 +2751,7 @@ export default defineComponent({
       videoResizeObserver.observe(videoElement)
 
       registerScreenshotButton()
+      registerDownloadButton()
       registerAudioTrackSelection()
       registerAutoplayToggle()
 

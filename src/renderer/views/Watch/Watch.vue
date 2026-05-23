@@ -45,6 +45,7 @@
           :delay-load-until-unix="adEndTimeUnixMs"
           class="videoPlayer"
           @error="handlePlayerError"
+          @request-download="openDownloadDialog"
           @loaded="handleVideoLoaded"
           @timeupdate="updateCurrentChapter"
           @ended="handleVideoEnded"
@@ -54,6 +55,14 @@
           @skip-to-next="handleSkipToNext"
           @skip-to-prev="handleSkipToPrev"
           @player-reload-requested="onPlayerReloadRequested"
+        />
+        <download-dialog
+          :show="downloadDialogVisible"
+          :video-id="downloadDialogVideo?.videoId"
+          :title="downloadDialogVideo?.title"
+          :thumbnail="downloadDialogVideo?.thumbnail"
+          @close="downloadDialogVisible = false"
+          @started="onDownloadStarted"
         />
         <div
           v-if="!isLoading && (isUpcoming || errorMessage)"

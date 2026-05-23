@@ -131,6 +131,35 @@ export default {
     return await ipcRenderer.invoke(IpcChannels.WRITE_TO_DEFAULT_FOLDER, filename, contents)
   },
 
+  /**
+   * Start a download via yt-dlp in the main process.
+   * @param {{ videoId: string, title?: string, channelName?: string, url?: string, format?:string, outputPath?:string }} opts
+   * @returns {Promise<{id:string}>}
+   */
+  startDownload: (opts) => {
+    return ipcRenderer.invoke(IpcChannels.START_DOWNLOAD, opts)
+  },
+
+  cancelDownload: (id) => {
+    ipcRenderer.send(IpcChannels.CANCEL_DOWNLOAD, id)
+  },
+
+  onDownloadProgress: (handler) => {
+    ipcRenderer.on(IpcChannels.DOWNLOAD_PROGRESS, (event, payload) => handler(payload))
+  },
+
+  onDownloadComplete: (handler) => {
+    ipcRenderer.on(IpcChannels.DOWNLOAD_COMPLETE, (event, payload) => handler(payload))
+  },
+
+  onDownloadError: (handler) => {
+    ipcRenderer.on(IpcChannels.DOWNLOAD_ERROR, (event, payload) => handler(payload))
+  },
+
+  chooseDownloadFolder: () => {
+    ipcRenderer.send(IpcChannels.CHOOSE_DOWNLOAD_FOLDER)
+  },
+
   relaunch: () => {
     ipcRenderer.send(IpcChannels.RELAUNCH_REQUEST)
   },

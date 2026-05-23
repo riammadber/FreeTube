@@ -13,6 +13,7 @@ import WatchVideoLiveChat from '../../components/WatchVideoLiveChat/WatchVideoLi
 import WatchVideoPlaylist from '../../components/WatchVideoPlaylist/WatchVideoPlaylist.vue'
 import WatchVideoRecommendations from '../../components/WatchVideoRecommendations/WatchVideoRecommendations.vue'
 import FtAgeRestricted from '../../components/FtAgeRestricted/FtAgeRestricted.vue'
+import DownloadDialog from '../../components/DownloadDialog/DownloadDialog.vue'
 import {
   buildVTTFileLocally,
   copyToClipboard,
@@ -69,6 +70,8 @@ export default defineComponent({
     'watch-video-playlist': WatchVideoPlaylist,
     'watch-video-recommendations': WatchVideoRecommendations,
     'ft-age-restricted': FtAgeRestricted
+    ,
+    'download-dialog': DownloadDialog
   },
   beforeRouteLeave: async function (to, from, next) {
     this.handleRouteChange()
@@ -154,6 +157,8 @@ export default defineComponent({
       adEndTimeUnixMs: 0,
 
       onMountedRun: false,
+      downloadDialogVisible: false,
+      downloadDialogVideo: null,
 
       // error handling/messages
       /** @type {string|null} */
@@ -396,6 +401,21 @@ export default defineComponent({
 
       window.addEventListener('beforeunload', this.handleWatchProgressAutoSave)
       this.resetAutoplayInterruptionTimeout()
+    },
+    openDownloadDialog() {
+      this.downloadDialogVisible = true
+      this.downloadDialogVideo = {
+        videoId: this.videoId,
+        title: this.videoTitle,
+        thumbnail: this.thumbnail,
+        channelName: this.channelName
+      }
+    },
+
+    onDownloadStarted(id) {
+      this.downloadDialogVisible = false
+      // show a simple toast
+      showToast(this.$t('Download started'))
     },
 
     setViewingModeOnFirstLoad: function () {
