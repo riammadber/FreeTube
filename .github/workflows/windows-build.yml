@@ -20,12 +20,15 @@ jobs:
         with:
           node-version: '18'
 
-      - name: Install dependencies and build
+      - name: Install dependencies and build (npm)
         run: |
-          npm install -g pnpm@7
-          pnpm -v
-          pnpm install --frozen-lockfile
-          pnpm run build
+          npm ci --prefer-offline --no-audit
+          npm run pack:main
+          npm run pack:renderer
+          npm run pack:preload
+          npm run pack:botGuardScript
+          node _scripts/injectAllowedPaths.mjs
+          node _scripts/build.mjs
         env:
           CI: true
 
